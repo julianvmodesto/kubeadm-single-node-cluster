@@ -128,14 +128,24 @@ kubectl expose deployment nginx --type NodePort --port=80 --target-port=80
 
 ## Secure Droplet
 
-If desired, remove SSH access.
+If desired, remove SSH access:
 
 ```bash
 doctl compute droplet untag $DROPLET_ID \
   --tag-name default-allow-ssh
 ```
 
-Or set up proper secure access via SSH keys.
+[Or set up proper secure access via SSH keys.](https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server#how-to-copy-a-public-key-to-your-server)
+
+If desired, you can restrict your IP address to access the API server:
+
+```bash
+MY_IP=$(curl ifconfig.co)
+doctl compute firewall update $(doctl compute firewall list -o json | jq '.[] | select(.name == "default-allow-kubeadm-single-node-cluster") | .id' -r) \
+  --name default-allow-kubeadm-single-node-cluster \
+  --tag-names kubeadm-single-node-cluster \
+  --inbound-rules protocol:tcp,ports:6443,address:${MY_IP}/32
+```
 
 ## Cleanup
 
